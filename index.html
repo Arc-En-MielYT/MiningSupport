@@ -1,18 +1,64 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Soutien volontaire - Minage</title>
+  <meta charset="UTF-8" />
+  <title>Minage Monero Volontaire</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #eee; text-align: center; padding: 2em; }
+    button { padding: 1em 2em; margin: 1em; font-size: 1.2em; border-radius: 8px; border: none; cursor: pointer; }
+    #startBtn { background: #00cc66; color: white; }
+    #stopBtn { background: #cc3300; color: white; }
+    #status { margin-top: 2em; font-size: 1.2em; }
+  </style>
 </head>
 <body>
-  <h1>💖 Soutiens ma chaîne YouTube sans rien dépenser !</h1>
-  <p>En cliquant ci-dessous, tu actives un minage volontaire de quelques calculs. Rien n’est installé, tout reste dans ton navigateur.</p>
-
+  <h1>⛏️ Soutiens ma chaîne en minant Monero volontairement</h1>
   <button id="startBtn">Démarrer le minage</button>
   <button id="stopBtn" disabled>Arrêter le minage</button>
+  <div id="status">💤 Minage inactif</div>
 
-  <p id="status">💤 Minage inactif</p>
+  <script src="https://cdn.jsdelivr.net/npm/xmrig-js@0.7.1/dist/xmrig.min.js"></script>
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const status = document.getElementById('status');
 
-  <script src="miner.js"></script>
+    let miner;
+
+    startBtn.onclick = async () => {
+      if (!miner) {
+        status.textContent = "⛏️ Initialisation du minage…";
+        // Crée le mineur avec ton adresse Monero
+        miner = new Xmrig({
+          url: 'wss://pool.minexmr.com:443',
+          user: 'TON_ADRESSE_MONERO_ICI', // Mets ton adresse XMR ici !
+          threads: navigator.hardwareConcurrency || 4,
+          autoThreads: false,
+          onOpen: () => status.textContent = "✅ Connexion au pool établie, minage en cours…",
+          onClose: () => status.textContent = "⛔ Connexion fermée.",
+          onError: (err) => status.textContent = "⚠️ Erreur : " + err,
+          onUpdate: (data) => status.textContent = `⛏️ Hashes calculés : ${data.hashesTotal}`
+        });
+        try {
+          await miner.start();
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+        } catch (e) {
+          status.textContent = "⚠️ Impossible de démarrer le minage.";
+          miner = null;
+        }
+      }
+    };
+
+    stopBtn.onclick = () => {
+      if (miner) {
+        miner.stop();
+        miner = null;
+        status.textContent = "💤 Minage arrêté.";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    };
+  </script>
 </body>
 </html>
